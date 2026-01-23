@@ -22,7 +22,7 @@
                 <div class="leading-tight">
                     <p class="text-sm font-semibold">{{ auth()->user()->name }}</p>
 
-                    <p class="text-xs text-gray-400">{{ ucfirst(auth()->user()->role) }}</p>
+                    <p class="text-xs text-gray">{{ ucfirst(auth()->user()->role) }}</p>
                 </div>
             </div>
 

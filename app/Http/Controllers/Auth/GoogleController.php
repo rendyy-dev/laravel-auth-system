@@ -9,12 +9,38 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class GoogleController extends Controller
 {
-    public function redirect()
+    public function redirect(Request $request)
     {
-        return Socialite::driver('google')->redirect();
+        $request->validate(
+            [
+                'g-recaptcha-response' => 'required',
+            ],
+            [
+                'g-recaptcha-response.required' => 'Silakan centang reCAPTCHA dulu.',
+            ]
+        );
+
+        $response = Http::asForm()->post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            [
+                'secret' => config('services.recaptcha.secret_key'),
+                'response' => $request->input('g-recaptcha-response'),
+                'remoteip' => $request->ip(),
+            ]
+        );
+
+        if (! $response->json('success')) {
+            return back()->withErrors([
+                'captcha' => 'Captcha tidak valid, silakan coba lagi.',
+            ]);
+        }
+
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     public function callback()
@@ -36,12 +62,19 @@ class GoogleController extends Controller
             ]);
 
             event(new Registered($user));
+
+            \Illuminate\Support\Facades\Notification::route('mail', env('ADMIN_EMAIL'))
+                ->notify(new \App\Notifications\NewGoogleUserJoined($user));
         }
 
         if (! $user->isActive()) {
             return redirect()->route('login')->withErrors([
                 'email' => 'Akun kamu dinonaktifkan oleh Admin.',
             ]);
+        }
+        if (!$user->hasVerifiedEmail()) {
+            Auth::login($user);
+            return redirect()->route('verification.notice');
         }
 
         Auth::login($user, true);

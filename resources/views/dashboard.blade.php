@@ -51,12 +51,12 @@
         </div>
 
         <!-- Info -->
-        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <!-- <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <h2 class="text-sm font-semibold mb-2">Next Step</h2>
             <p class="text-sm text-gray-400">
                 Complete your profile and start building awesome features 🚀
             </p>
-        </div>
+        </div> -->
 
     </div>
 </x-app-layout>

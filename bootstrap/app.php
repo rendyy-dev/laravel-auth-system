@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => App\Http\Middleware\RoleMiddleware::class,
         ]);
     })
+    ->withCommands([
+        App\Console\Commands\PurgeDeletedUsers::class
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

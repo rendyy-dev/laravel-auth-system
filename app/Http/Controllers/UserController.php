@@ -8,11 +8,23 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $this->authorizeAccess();
 
-        $users = User::latest()->get();
+        $search = $request->search;
+
+        $users = User::query()
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('users.index', compact('users'));
     }
@@ -172,6 +184,39 @@ class UserController extends Controller
         return redirect()
             ->route('users.index')
             ->with('success', 'User berhasil dihapus');
+    }
+
+    public function restore($id)
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            abort(403);
+        }
+
+        User::withTrashed()->findOrFail($id)->restore();
+
+        return back()->with('success', 'Akun berhasil dikembalikan');
+    }
+
+    public function forceDelete($id)
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            abort(403);
+        }
+
+        User::withTrashed()->findOrFail($id)->forceDelete();
+
+        return back()->with('success', 'Akun telah dihapus permanen');
+    }
+
+    public function trash()
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            abort(403);
+        }
+
+        $users = User::onlyTrashed()->latest()->get();
+
+        return view('users.trash', compact('users'));
     }
 
     private function authorizeAccess()

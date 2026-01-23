@@ -1,5 +1,5 @@
 <x-guest-layout>
-    <div class="space-y-4">
+    <div class="space-y-4" x-data="completeProfile()">
 
         <!-- Header -->
         <div class="text-center">
@@ -22,10 +22,7 @@
             </div>
         @endif
 
-        <form id="completeProfileForm"
-              method="POST"
-              action="{{ route('profile.complete.store') }}"
-              class="space-y-3">
+        <form method="POST" action="{{ route('profile.complete.store') }}" class="space-y-3">
             @csrf
 
             <!-- Name -->
@@ -63,6 +60,8 @@
                 type="password"
                 class="w-full bg-gray-800 border-gray-700 text-gray-100"
                 placeholder="Password"
+                x-model="password"
+                @input="validatePassword"
                 required
             />
 
@@ -73,75 +72,53 @@
                 type="password"
                 class="w-full bg-gray-800 border-gray-700 text-gray-100"
                 placeholder="Confirm Password"
+                x-model="confirmPassword"
+                @input="validatePassword"
                 required
             />
 
             <!-- Password Rules -->
-            <div class="text-xs space-y-1" id="passwordRules">
-                <p id="rule-length" class="text-red-400">• Minimal 8 karakter</p>
-                <p id="rule-upper" class="text-red-400">• Mengandung huruf besar</p>
-                <p id="rule-lower" class="text-red-400">• Mengandung huruf kecil</p>
-                <p id="rule-number" class="text-red-400">• Mengandung angka</p>
-                <p id="rule-symbol" class="text-red-400">• Mengandung simbol</p>
-                <p id="rule-match" class="text-red-400">• Password cocok</p>
+            <div class="text-xs space-y-1" x-show="password.length > 0" x-cloak>
+                <p :class="ruleMin8 ? 'text-green-400' : 'text-red-400'">• Minimal 8 karakter</p>
+                <p :class="ruleUpper ? 'text-green-400' : 'text-red-400'">• Mengandung huruf besar</p>
+                <p :class="ruleLower ? 'text-green-400' : 'text-red-400'">• Mengandung huruf kecil</p>
+                <p :class="ruleNumber ? 'text-green-400' : 'text-red-400'">• Mengandung angka</p>
+                <p :class="ruleSymbol ? 'text-green-400' : 'text-red-400'">• Mengandung simbol</p>
+                <p :class="ruleMatch ? 'text-green-400' : 'text-red-400'">• Password cocok</p>
             </div>
 
             <button
-                id="submitBtn"
                 type="submit"
-                disabled
-                class="w-full text-white bg-indigo-600 hover:bg-indigo-500 text-sm font-medium py-2.5 rounded-lg
-                       disabled:opacity-50 disabled:cursor-not-allowed">
+                class="w-full text-white bg-indigo-600 hover:bg-indigo-500 text-sm font-medium py-2.5 rounded-lg">
                 Save & Continue
             </button>
         </form>
-
     </div>
 
-    {{-- JAVASCRIPT VALIDATION --}}
     <script>
-        const password = document.getElementById('password');
-        const confirmPassword = document.getElementById('password_confirmation');
-        const submitBtn = document.getElementById('submitBtn');
+        function completeProfile() {
+            return {
+                password: '',
+                confirmPassword: '',
 
-        const rules = {
-            length: document.getElementById('rule-length'),
-            upper: document.getElementById('rule-upper'),
-            lower: document.getElementById('rule-lower'),
-            number: document.getElementById('rule-number'),
-            symbol: document.getElementById('rule-symbol'),
-            match: document.getElementById('rule-match'),
-        };
+                ruleMin8: false,
+                ruleUpper: false,
+                ruleLower: false,
+                ruleNumber: false,
+                ruleSymbol: false,
+                ruleMatch: false,
 
-        function validatePassword() {
-            const value = password.value;
+                validatePassword() {
+                    const value = this.password;
 
-            const checks = {
-                length: value.length >= 8,
-                upper: /[A-Z]/.test(value),
-                lower: /[a-z]/.test(value),
-                number: /[0-9]/.test(value),
-                symbol: /[^A-Za-z0-9]/.test(value),
-                match: value === confirmPassword.value && value !== '',
-            };
-
-            let isValid = true;
-
-            for (const rule in checks) {
-                if (checks[rule]) {
-                    rules[rule].classList.remove('text-red-400');
-                    rules[rule].classList.add('text-green-400');
-                } else {
-                    rules[rule].classList.remove('text-green-400');
-                    rules[rule].classList.add('text-red-400');
-                    isValid = false;
+                    this.ruleMin8 = value.length >= 8;
+                    this.ruleUpper = /[A-Z]/.test(value);
+                    this.ruleLower = /[a-z]/.test(value);
+                    this.ruleNumber = /[0-9]/.test(value);
+                    this.ruleSymbol = /[^A-Za-z0-9]/.test(value);
+                    this.ruleMatch = value === this.confirmPassword && value !== '';
                 }
             }
-
-            submitBtn.disabled = !isValid;
         }
-
-        password.addEventListener('input', validatePassword);
-        confirmPassword.addEventListener('input', validatePassword);
     </script>
 </x-guest-layout>
