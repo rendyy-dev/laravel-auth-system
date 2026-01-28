@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\OtpController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,6 +74,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/complete-profile', [ProfileController::class, 'storeComplete'])
         ->name('profile.complete.store');
+
+    /*
+    | OTP
+    */
+    Route::get('/otp/verify', function () {
+        return view('otp.verify');
+    })->name('otp.verify.form');
+
+    Route::post('/otp/send', [OtpController::class, 'send'])
+        ->name('otp.send');
+
+    Route::post('/otp/verify', [OtpController::class, 'verify'])
+        ->name('otp.verify');
+
+    /*
+    | Change Password (SETELAH OTP)
+    */
+    Route::get('/change-password', function () {
+        return view('auth.change-password');
+    })
+    ->middleware(['auth', 'otp:password_change'])
+    ->name('password.form'); // ✅ GANTI NAMA
+
 });
 
 require __DIR__.'/auth.php';

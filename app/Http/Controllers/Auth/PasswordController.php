@@ -24,6 +24,8 @@ class PasswordController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('status', 'password-updated');
+        session()->forget('otp_verified');
+
+        return redirect()->route('profile.edit')->with('status', 'password-updated');
     }
 }

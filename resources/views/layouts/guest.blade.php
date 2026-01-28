@@ -28,6 +28,18 @@
 
         <!-- Auth Card -->
         <div class="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-xl">
+            @if (session('status'))
+                        <div 
+                            x-data="{ show: true }"
+                            x-init="setTimeout(() => show = false, 3000)"
+                            x-show="show"
+                            class="max-w-4xl mx-auto mt-6 px-4"
+                        >
+                            <div class="bg-green-900/60 border border-green-700 text-green-200 px-4 py-3 rounded-lg text-sm">
+                                {{ session('status') }}
+                            </div>
+                </div>
+            @endif
             {{ $slot }}
         </div>
 

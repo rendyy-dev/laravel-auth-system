@@ -14,7 +14,6 @@
 <body class="font-sans antialiased bg-gray-950 text-gray-100">
 
     <div class="min-h-screen flex">
-
         <aside class="w-64 bg-gray-900 border-r border-gray-800 hidden md:flex flex-col">
             <div class="px-6 py-6 flex items-center gap-3 border-b border-gray-800">
                 <img src="{{ auth()->user()->avatarUrl() }}" alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-gray-700">
@@ -84,6 +83,19 @@
 
             <!-- Content -->
             <main class="flex-1 p-6">
+                    @if (session('status'))
+                        <div 
+                            x-data="{ show: true }"
+                            x-init="setTimeout(() => show = false, 3000)"
+                            x-show="show"
+                            class="max-w-4xl mx-auto mt-6 px-4"
+                        >
+                            <div class="bg-green-900/60 border border-green-700 text-green-200 px-4 py-3 rounded-lg text-sm">
+                                {{ session('status') }}
+                            </div>
+                        </div>
+                    @endif
+
                 {{ $slot }}
             </main>
         </div>
