@@ -7,30 +7,42 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    /**
+     * Rules untuk login manual
+     */
     public function rules(): array
     {
         return [
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'g-recaptcha-response' => ['required', 'captcha'], // validasi reCaptcha login manual
+            'g-recaptcha-response' => ['required'], // wajib diisi
         ];
     }
 
+    /**
+     * Pesan error bahasa Indonesia
+     */
     public function messages(): array
     {
         return [
             'g-recaptcha-response.required' => 'Silakan centang reCAPTCHA terlebih dahulu.',
-            'g-recaptcha-response.captcha'  => 'Captcha tidak valid, silakan coba lagi.',
         ];
     }
 
+    /**
+     * Proses autentikasi
+     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
+
+        // ✅ Validasi reCaptcha manual
+        $this->validateRecaptcha();
 
         $login = $this->input('login');
 
@@ -57,6 +69,9 @@ class LoginRequest extends FormRequest
         RateLimiter::clear($this->throttleKey());
     }
 
+    /**
+     * Mengecek limit login
+     */
     public function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
@@ -75,10 +90,33 @@ class LoginRequest extends FormRequest
         ]);
     }
 
+    /**
+     * Key untuk rate limiter
+     */
     public function throttleKey(): string
     {
         return Str::transliterate(
             Str::lower($this->input('login')) . '|' . $this->ip()
         );
+    }
+
+    /**
+     * Validasi reCaptcha manual ke Google
+     */
+    protected function validateRecaptcha(): void
+    {
+        $token = $this->input('g-recaptcha-response');
+
+        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recaptcha.secret_key'),
+            'response' => $token,
+            'remoteip' => $this->ip(),
+        ]);
+
+        if (! $response->json('success')) {
+            throw ValidationException::withMessages([
+                'g-recaptcha-response' => 'Captcha tidak valid, silakan coba lagi.'
+            ]);
+        }
     }
 }
