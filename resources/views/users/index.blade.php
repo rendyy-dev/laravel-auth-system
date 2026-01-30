@@ -15,7 +15,8 @@
             <h1 class="text-2xl font-semibold">Users</h1>
 
             <div class="flex gap-3">
-                @if($authUser->role === 'super_admin')
+                {{-- Tombol Sampah (Trash) --}}
+                @if(in_array($authUser->role, ['admin', 'super_admin']))
                     <a href="{{ route('users.trash') }}"
                        class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
                         🗑 Sampah

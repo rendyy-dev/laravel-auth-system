@@ -52,18 +52,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:super_admin,admin');
 
     /*
-    | Users Trash (Super Admin only)
+    | Users Trash (Admin & Super Admin)
     */
-    Route::prefix('users')->name('users.')->middleware('role:super_admin')->group(function () {
+    Route::prefix('users')->name('users.')->middleware('role:super_admin,admin')->group(function () {
 
-        Route::get('trash', [UserController::class, 'trash'])
-            ->name('trash');
+        // View Trash
+        Route::get('trash', [UserController::class, 'trash'])->name('trash');
 
-        Route::post('{id}/restore', [UserController::class, 'restore'])
-            ->name('restore');
+        // Restore (admin bisa restore user biasa)
+        Route::post('{id}/restore', [UserController::class, 'restore'])->name('restore');
 
-        Route::delete('{id}/force-delete', [UserController::class, 'force-delete'])
-            ->name('force-delete');
+        // Force delete (hanya super_admin)
+        Route::delete('{id}/force-delete', [UserController::class, 'forceDelete'])
+            ->name('force-delete')
+            ->middleware('role:super_admin');
     });
 
     /*

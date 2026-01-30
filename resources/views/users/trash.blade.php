@@ -1,38 +1,44 @@
 <x-app-layout>
-    <div class="space-y-6">
+@php
+    $authUser = auth()->user();
+@endphp
 
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-semibold">Trash Users</h1>
+<div class="space-y-6">
 
-            <a href="{{ route('users.index') }}"
-               class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
-                ← Back
-            </a>
-        </div>
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-semibold">Trash Users</h1>
 
-        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-800 text-gray-400">
-                    <tr>
-                        <th class="px-4 py-3 text-left">Name</th>
-                        <th class="px-4 py-3 text-center">Email</th>
-                        <th class="px-4 py-3 text-center">Deleted At</th>
-                        <th class="px-4 py-3 text-center">Action</th>
-                    </tr>
-                </thead>
+        <a href="{{ route('users.index') }}"
+           class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">
+            ← Back
+        </a>
+    </div>
 
-                <tbody>
-                @foreach($users as $user)
-                    <tr class="border-t border-gray-800">
+    <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-800 text-gray-400">
+                <tr>
+                    <th class="px-4 py-3 text-left">Name</th>
+                    <th class="px-4 py-3 text-center">Email</th>
+                    <th class="px-4 py-3 text-center">Deleted At</th>
+                    <th class="px-4 py-3 text-center">Action</th>
+                </tr>
+            </thead>
 
-                        <td class="px-4 py-3">{{ $user->name }}</td>
-                        <td class="px-4 py-3 text-center">{{ $user->email }}</td>
-                        <td class="px-4 py-3 text-center text-xs text-gray-400">
-                            {{ $user->deleted_at->diffForHumans() }}
-                        </td>
+            <tbody>
+            @forelse($users as $user)
+                <tr class="border-t border-gray-800">
 
-                        <td class="px-4 py-3 text-center space-x-3">
+                    <td class="px-4 py-3">{{ $user->name }}</td>
+                    <td class="px-4 py-3 text-center">{{ $user->email }}</td>
+                    <td class="px-4 py-3 text-center text-xs text-gray-400">
+                        {{ $user->deleted_at->diffForHumans() }}
+                    </td>
 
+                    <td class="px-4 py-3 text-center space-x-3">
+
+                        {{-- Restore: admin & super_admin --}}
+                        @if($authUser->role === 'super_admin' || ($authUser->role === 'admin' && $user->role === 'user'))
                             <form method="POST"
                                   action="{{ route('users.restore', $user->id) }}"
                                   class="inline">
@@ -41,7 +47,10 @@
                                     Restore
                                 </button>
                             </form>
+                        @endif
 
+                        {{-- Force Delete: hanya super_admin --}}
+                        @if($authUser->role === 'super_admin')
                             <form method="POST"
                                   action="{{ route('users.force-delete', $user->id) }}"
                                   class="inline"
@@ -53,13 +62,20 @@
                                     Delete Permanen
                                 </button>
                             </form>
+                        @endif
 
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
-
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="py-6 text-center text-gray-500">
+                        Tidak ada data user.
+                    </td>
+                </tr>
+            @endforelse
+            </tbody>
+        </table>
     </div>
+
+</div>
 </x-app-layout>

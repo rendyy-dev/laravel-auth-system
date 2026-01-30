@@ -40,50 +40,36 @@ class UserController extends Controller
     {
         $this->authorizeAccess();
 
-        // 🔥 NORMALISASI USERNAME
         $request->merge([
             'username' => strtolower(trim($request->username)),
         ]);
 
-        $validated = $request->validate(
-            [
-                'name' => ['required', 'string', 'max:255'],
-
-                'username' => [
-                    'required',
-                    'string',
-                    'max:50',
-                    'regex:/^[a-z0-9_-]+$/',
-                    'unique:users,username',
-                ],
-
-                'email' => [
-                    'required',
-                    'email',
-                    'max:255',
-                    'unique:users,email',
-                ],
-
-                'password' => [
-                    'required',
-                    'confirmed',
-                    'min:8',
-                    'regex:/[a-z]/',
-                    'regex:/[A-Z]/',
-                    'regex:/[0-9]/',
-                    'regex:/[^A-Za-z0-9]/',
-                ],
-
-                'role' => ['required', 'in:admin,user'],
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[a-z0-9_-]+$/',
+                'unique:users,username',
             ],
-            [
-                'username.unique' => 'Username sudah digunakan.',
-                'username.regex' => 'Username hanya boleh huruf kecil, angka, tanpa spasi.',
-                'email.unique' => 'Email sudah terdaftar.',
-                'password.regex' =>
-                    'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
-            ]
-        );
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:users,email',
+            ],
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[^A-Za-z0-9]/',
+            ],
+            'role' => ['required', 'in:admin,user'],
+        ]);
 
         if (auth()->user()->role === 'admin' && $validated['role'] !== 'user') {
             abort(403);
@@ -97,9 +83,7 @@ class UserController extends Controller
             'role' => $validated['role'],
         ]);
 
-        return redirect()
-            ->route('users.index')
-            ->with('success', 'User berhasil ditambahkan');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan');
     }
 
     public function edit(User $user)
@@ -121,14 +105,12 @@ class UserController extends Controller
             abort(403);
         }
 
-        // 🔥 NORMALISASI USERNAME
         $request->merge([
             'username' => strtolower(trim($request->username)),
         ]);
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-
             'username' => [
                 'required',
                 'string',
@@ -136,14 +118,12 @@ class UserController extends Controller
                 'regex:/^[a-z0-9_-]+$/',
                 Rule::unique('users', 'username')->ignore($user->id),
             ],
-
             'email' => [
                 'required',
                 'email',
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-
             'password' => [
                 'nullable',
                 'min:8',
@@ -158,16 +138,7 @@ class UserController extends Controller
             $rules['role'] = ['required', 'in:admin,user'];
         }
 
-        $validated = $request->validate(
-            $rules,
-            [
-                'username.unique' => 'Username sudah digunakan.',
-                'username.regex' => 'Username hanya boleh huruf kecil, angka, tanpa spasi.',
-                'email.unique' => 'Email sudah terdaftar.',
-                'password.regex' =>
-                    'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
-            ]
-        );
+        $validated = $request->validate($rules);
 
         $data = [
             'name' => $validated['name'],
@@ -185,35 +156,63 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()
-            ->route('users.index')
-            ->with('success', 'User berhasil diperbarui');
+        return redirect()->route('users.index')->with('success', 'User berhasil diperbarui');
     }
 
     public function destroy(User $user)
     {
-        if (auth()->user()->role !== 'super_admin') {
+        $authUser = auth()->user();
+
+        if ($user->id === $authUser->id) {
+            abort(403, 'Tidak bisa menghapus akun sendiri');
+        }
+
+        if ($authUser->role === 'admin' && $user->role !== 'user') {
             abort(403);
         }
 
-        if ($user->id === auth()->id()) {
-            abort(403, 'Tidak bisa menghapus akun sendiri');
+        if ($authUser->role === 'user') {
+            abort(403);
         }
 
         $user->delete();
 
-        return redirect()
-            ->route('users.index')
-            ->with('success', 'User berhasil dihapus');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus');
+    }
+
+    public function trash()
+    {
+        $authUser = auth()->user();
+
+        if ($authUser->role === 'super_admin') {
+            $users = User::onlyTrashed()->latest()->get();
+        } elseif ($authUser->role === 'admin') {
+            // Admin hanya lihat user biasa
+            $users = User::onlyTrashed()
+                ->where('role', 'user')
+                ->latest()
+                ->get();
+        } else {
+            abort(403);
+        }
+
+        return view('users.trash', compact('users'));
     }
 
     public function restore($id)
     {
-        if (auth()->user()->role !== 'super_admin') {
+        $authUser = auth()->user();
+        $user = User::withTrashed()->findOrFail($id);
+
+        if ($authUser->role === 'admin' && $user->role !== 'user') {
             abort(403);
         }
 
-        User::withTrashed()->findOrFail($id)->restore();
+        if ($authUser->role === 'user') {
+            abort(403);
+        }
+
+        $user->restore();
 
         return back()->with('success', 'Akun berhasil dikembalikan');
     }
@@ -229,20 +228,9 @@ class UserController extends Controller
         return back()->with('success', 'Akun telah dihapus permanen');
     }
 
-    public function trash()
-    {
-        if (auth()->user()->role !== 'super_admin') {
-            abort(403);
-        }
-
-        $users = User::onlyTrashed()->latest()->get();
-
-        return view('users.trash', compact('users'));
-    }
-
     private function authorizeAccess()
     {
-        if (! in_array(auth()->user()->role, ['admin', 'super_admin'])) {
+        if (!in_array(auth()->user()->role, ['admin', 'super_admin'])) {
             abort(403);
         }
     }
@@ -260,7 +248,7 @@ class UserController extends Controller
         }
 
         $user->update([
-            'is_active' => ! $user->is_active,
+            'is_active' => !$user->is_active,
         ]);
 
         return back()->with('success', 'Status user berhasil diubah');
