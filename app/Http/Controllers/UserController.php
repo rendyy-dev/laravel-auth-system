@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -18,8 +19,8 @@ class UserController extends Controller
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('username', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('username', 'like', "%{$search}%");
                 });
             })
             ->latest()
@@ -32,7 +33,6 @@ class UserController extends Controller
     public function create()
     {
         $this->authorizeAccess();
-
         return view('users.create');
     }
 
@@ -40,14 +40,20 @@ class UserController extends Controller
     {
         $this->authorizeAccess();
 
-        $request->validate(
+        // 🔥 NORMALISASI USERNAME
+        $request->merge([
+            'username' => strtolower(trim($request->username)),
+        ]);
+
+        $validated = $request->validate(
             [
                 'name' => ['required', 'string', 'max:255'],
 
                 'username' => [
                     'required',
                     'string',
-                    'max:255',
+                    'max:50',
+                    'regex:/^[a-z0-9_-]+$/',
                     'unique:users,username',
                 ],
 
@@ -62,32 +68,33 @@ class UserController extends Controller
                     'required',
                     'confirmed',
                     'min:8',
-                    'regex:/[a-z]/',       // huruf kecil
-                    'regex:/[A-Z]/',       // huruf besar
-                    'regex:/[0-9]/',       // angka
-                    'regex:/[^A-Za-z0-9]/' // simbol
+                    'regex:/[a-z]/',
+                    'regex:/[A-Z]/',
+                    'regex:/[0-9]/',
+                    'regex:/[^A-Za-z0-9]/',
                 ],
 
                 'role' => ['required', 'in:admin,user'],
             ],
             [
                 'username.unique' => 'Username sudah digunakan.',
+                'username.regex' => 'Username hanya boleh huruf kecil, angka, tanpa spasi.',
                 'email.unique' => 'Email sudah terdaftar.',
                 'password.regex' =>
                     'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
             ]
         );
 
-        if (auth()->user()->role === 'admin' && $request->role !== 'user') {
+        if (auth()->user()->role === 'admin' && $validated['role'] !== 'user') {
             abort(403);
         }
 
         User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
         ]);
 
         return redirect()
@@ -114,21 +121,27 @@ class UserController extends Controller
             abort(403);
         }
 
+        // 🔥 NORMALISASI USERNAME
+        $request->merge([
+            'username' => strtolower(trim($request->username)),
+        ]);
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
 
             'username' => [
                 'required',
                 'string',
-                'max:255',
-                'unique:users,username,' . $user->id,
+                'max:50',
+                'regex:/^[a-z0-9_-]+$/',
+                Rule::unique('users', 'username')->ignore($user->id),
             ],
 
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                'unique:users,email,' . $user->id,
+                Rule::unique('users', 'email')->ignore($user->id),
             ],
 
             'password' => [
@@ -145,7 +158,16 @@ class UserController extends Controller
             $rules['role'] = ['required', 'in:admin,user'];
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate(
+            $rules,
+            [
+                'username.unique' => 'Username sudah digunakan.',
+                'username.regex' => 'Username hanya boleh huruf kecil, angka, tanpa spasi.',
+                'email.unique' => 'Email sudah terdaftar.',
+                'password.regex' =>
+                    'Password harus mengandung huruf besar, huruf kecil, angka, dan simbol.',
+            ]
+        );
 
         $data = [
             'name' => $validated['name'],
@@ -170,7 +192,6 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-  
         if (auth()->user()->role !== 'super_admin') {
             abort(403);
         }
@@ -229,7 +250,7 @@ class UserController extends Controller
     public function toggleActive(User $user)
     {
         $this->authorizeAccess();
-        
+
         if (auth()->user()->role === 'admin' && $user->role === 'super_admin') {
             abort(403);
         }

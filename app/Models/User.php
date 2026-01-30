@@ -33,6 +33,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active',
         'profile_complete',
         'avatar',
+        'telepon',
+        'alamat',
     ];
 
     /**
@@ -72,4 +74,21 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name);
     }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('username')) {
+            $this->merge([
+                'username' => strtolower(trim($this->username)),
+            ]);
+        }
+    }
+    
+
+    public function setUsernameAttribute($value)
+    {
+        $this->attributes['username'] = strtolower($value);
+    }
+
+
 }

@@ -71,6 +71,30 @@
             </p>
         @endif
 
+        <div>
+            <h2 class="text-gray-300 font-semibold">Telepon:</h2>
+            <x-text-input
+                name="telepon"
+                type="text"
+                class="w-full bg-gray-800 border-gray-700 text-gray-100"
+                :value="old('telepon', $user->telepon)"
+                placeholder="+62 812 3456 7890"
+            />
+            <x-input-error class="mt-1" :messages="$errors->get('telepon')" />
+        </div>
+
+        <div>
+            <h2 class="text-gray-300 font-semibold">Alamat:</h2>
+            <textarea
+                name="alamat"
+                rows="3"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg bg-gray-800 text-gray-100 p-2"
+            >{{ old('alamat', $user->alamat) }}</textarea>
+
+            <x-input-error class="mt-1" :messages="$errors->get('alamat')" />
+        </div>
+
+
         <div class="flex items-center gap-3">
             <button
                 type="submit"

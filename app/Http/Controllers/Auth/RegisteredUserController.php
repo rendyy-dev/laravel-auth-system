@@ -34,6 +34,7 @@ class RegisteredUserController extends Controller
                     'required',
                     'string',
                     'max:255',
+                    'regex:/^[a-z0-9_-]+$/',
                     'unique:users,username',
                 ],
 
@@ -50,24 +51,18 @@ class RegisteredUserController extends Controller
                     'required',
                     'confirmed',
                     'min:8',
-
-                    // huruf kecil
-                    'regex:/[a-z]/',
-
-                    // huruf besar
-                    'regex:/[A-Z]/',
-
-                    // angka
-                    'regex:/[0-9]/',
-
-                    // simbol
-                    'regex:/[^A-Za-z0-9]/',
+                    'regex:/[a-z]/',       // huruf kecil
+                    'regex:/[A-Z]/',       // huruf besar
+                    'regex:/[0-9]/',       // angka
+                    'regex:/[^A-Za-z0-9]/' // simbol
                 ],
             ],
             [
                 // username
                 'username.required' => 'Username wajib diisi.',
                 'username.unique' => 'Username sudah digunakan.',
+                'username.regex' =>
+                    'Username hanya boleh huruf kecil, angka, tanpa spasi.',
 
                 // email
                 'email.unique' => 'Email sudah terdaftar.',

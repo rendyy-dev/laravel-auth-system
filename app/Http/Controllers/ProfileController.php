@@ -27,12 +27,13 @@ class ProfileController extends Controller
         $user->fill($request->validated());
 
         if ($request->hasFile('avatar')) {
-            \Storage::disk('public')->delete($user->avatar);
+            if ($user->avatar) {
+                \Storage::disk('public')->delete($user->avatar);
+            }
+
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
         }
-
-        $path = $request->file('avatar')?->store('avatars', 'public');
-
-        $user->avatar = $path;
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
@@ -40,26 +41,12 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
     public function destroy(Request $request): RedirectResponse
     {
         abort(403, 'Eitss jangan coba coba hapus akun yaa.');
-        // $request->validateWithBag('userDeletion', [
-        //     'password' => ['required', 'current_password'],
-        // ]);
-
-        // $user = $request->user();
-
-        // Auth::logout();
-
-        // $user->delete();
-
-        // $request->session()->invalidate();
-        // $request->session()->regenerateToken();
-
-        // return Redirect::to('/');
     }
 
     // 🔥 GOOGLE USER ONLY
@@ -76,21 +63,31 @@ class ProfileController extends Controller
 
     public function storeComplete(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => [
-                'required',
-                'string',
-                'max:50',
-                'alpha_dash',
-                'unique:users,username',
+        $request->validate(
+            [
+                'name' => ['required', 'string', 'max:255'],
+
+                'username' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    'regex:/^[a-z0-9_-]+$/',
+                    'unique:users,username',
+                ],
+
+                'password' => [
+                    'required',
+                    'confirmed',
+                    Password::defaults(),
+                ],
             ],
-            'password' => [
-                'required',
-                'confirmed',
-                Password::defaults(),
-            ],
-        ]);
+            [
+                'username.regex' =>
+                    'Username hanya boleh huruf kecil, angka, tanpa spasi.',
+                'username.unique' =>
+                    'Username sudah digunakan.',
+            ]
+        );
 
         $user = auth()->user();
 

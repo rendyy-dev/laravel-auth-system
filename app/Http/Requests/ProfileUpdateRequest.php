@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
@@ -17,19 +15,33 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+
             'username' => [
                 'required',
                 'string',
                 'max:50',
-                'alpha_dash',
+                'regex:/^[a-z0-9_-]+$/',
                 'unique:users,username,' . $this->user()->id,
             ],
+
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:255',
                 'unique:users,email,' . $this->user()->id,
+            ],
+
+            'telepon' => [
+                'nullable',
+                'string',
+                'max:20',
+            ],
+
+            'alamat' => [
+                'nullable',
+                'string',
+                'max:1000',
             ],
 
             'avatar' => [
@@ -41,4 +53,40 @@ class ProfileUpdateRequest extends FormRequest
         ];
     }
 
+    /**
+     * Custom validation messages.
+     */
+    public function messages(): array
+    {
+        return [
+            // name
+            'name.required' => 'Nama wajib diisi.',
+            'name.max' => 'Nama maksimal 255 karakter.',
+
+            // username
+            'username.required' => 'Username wajib diisi.',
+            'username.unique' => 'Username sudah digunakan.',
+            'username.regex' =>
+                'Username hanya boleh huruf kecil, angka, tanpa spasi.',
+            'username.max' => 'Username maksimal 50 karakter.',
+
+            // email
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar.',
+            'email.max' => 'Email maksimal 255 karakter.',
+
+            // telepon
+            'telepon.max' => 'Nomor telepon maksimal 20 karakter.',
+
+            // alamat
+            'alamat.max' => 'Alamat maksimal 1000 karakter.',
+
+            // avatar
+            'avatar.image' => 'Avatar harus berupa gambar.',
+            'avatar.mimes' =>
+                'Avatar harus berformat JPG, JPEG, PNG, atau WEBP.',
+            'avatar.max' => 'Ukuran avatar maksimal 2MB.',
+        ];
+    }
 }
