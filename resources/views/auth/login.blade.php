@@ -43,14 +43,26 @@
             />
             <x-input-error :messages="$errors->get('login')" />
 
-            <x-text-input
-                name="password"
-                type="password"
-                placeholder="Password"
-                required
-                class="w-full bg-gray-800 border-gray-700 text-gray-100"
-            />
-            <x-input-error :messages="$errors->get('password')" />
+            <!-- Password dengan toggle show/hide -->
+            <div x-data="{ show: false }" class="relative">
+                <input
+                    :type="show ? 'text' : 'password'"
+                    name="password"
+                    placeholder="Password"
+                    required
+                    class="w-full bg-gray-800 border-gray-700 text-gray-100 pr-10"
+                />
+                <x-input-error :messages="$errors->get('password')" />
+
+                <button
+                    type="button"
+                    @click="show = !show"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                >
+                    <span x-show="!show">👁️</span>
+                    <span x-show="show">🙈</span>
+                </button>
+            </div>
 
             <!-- reCaptcha untuk login manual -->
             <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>

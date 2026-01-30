@@ -24,12 +24,12 @@
                 @endif
             </div>
 
-            {{-- HAPUS AKUN --}}
+            <!-- {{-- HAPUS AKUN --}}
             @if(auth()->user()->role !== 'super_admin')
                 <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
                     @include('profile.partials.delete-user-form')
                 </div>
-            @endif
+            @endif -->
 
         </div>
     </div>
