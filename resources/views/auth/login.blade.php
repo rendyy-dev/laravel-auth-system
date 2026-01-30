@@ -52,6 +52,10 @@
             />
             <x-input-error :messages="$errors->get('password')" />
 
+            <!-- reCaptcha untuk login manual -->
+            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+            <x-input-error :messages="$errors->get('g-recaptcha-response')" />
+
             <button class="w-full rounded-lg bg-indigo-600 py-2.5 text-white">
                 Login
             </button>
@@ -64,38 +68,8 @@
             <div class="flex-1 h-px bg-gray-700"></div>
         </div>
 
-        <!-- Google Login -->
-        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-        <form
-            method="POST"
-            action="{{ route('google.login') }}"
-            x-data="{ error: false }"
-            @submit.prevent="
-                if (!grecaptcha.getResponse()) {
-                    error = true
-                    return
-                }
-                $el.submit()
-            "
-            class="space-y-3"
-        >
-            @csrf
-
-            <div
-                class="g-recaptcha flex justify-center"
-                data-sitekey="{{ config('services.recaptcha.site_key') }}"
-            ></div>
-
-            <p x-show="error" class="text-center text-xs text-red-500">
-                Silakan centang reCAPTCHA terlebih dahulu.
-            </p>
-
-            <x-input-error
-                :messages="$errors->get('captcha')"
-                class="text-center"
-            />
-
+        <!-- Google Login (bebas reCaptcha) -->
+        <form method="GET" action="{{ route('google.login') }}" class="space-y-3">
             <button
                 type="submit"
                 class="flex w-full items-center justify-center gap-3 rounded-lg bg-gray-800 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700"
@@ -113,5 +87,8 @@
         </div>
 
     </div>
+
+    <!-- reCaptcha script hanya untuk login manual -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
 </x-guest-layout>

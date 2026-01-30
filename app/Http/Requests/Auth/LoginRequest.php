@@ -16,6 +16,15 @@ class LoginRequest extends FormRequest
         return [
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
+            'g-recaptcha-response' => ['required', 'captcha'], // validasi reCaptcha login manual
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'g-recaptcha-response.required' => 'Silakan centang reCAPTCHA terlebih dahulu.',
+            'g-recaptcha-response.captcha'  => 'Captcha tidak valid, silakan coba lagi.',
         ];
     }
 
