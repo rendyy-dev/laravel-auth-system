@@ -1,6 +1,12 @@
 <x-app-layout>
-    <div x-data="{ show: {{ $errors->any() ? 'true' : 'false' }}, password: '', confirmPassword: '' }"
-         x-init="if(show) setTimeout(() => show = false, 4000)">
+    <div x-data="{ 
+            show: {{ $errors->any() ? 'true' : 'false' }}, 
+            password: '', 
+            confirmPassword: '', 
+            username: '' 
+        }"
+         x-init="if(show) setTimeout(() => show = false, 4000)"
+    >
 
         <!-- Popup Error -->
         <div x-show="show" x-transition class="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
@@ -27,7 +33,10 @@
                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" required>
 
                 <input name="username" placeholder="Username"
-                       class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" required>
+                       class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2"
+                       x-model="username"
+                       @input="username = username.replace(/\s+/g, '').toLowerCase()"
+                       required>
 
                 <input name="email" type="email" placeholder="Email"
                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2" required>
